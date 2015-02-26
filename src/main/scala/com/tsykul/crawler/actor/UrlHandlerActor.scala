@@ -9,7 +9,7 @@ class UrlHandlerActor(val filters: List[String]) extends Actor with ActorLogging
   val fetcher = context.actorOf(Props(classOf[FetcherActor], parser))
 
   override def receive: Receive = {
-    case url@Url(link, rank, _) =>
+    case url: Url =>
       fetcher ! url
     case parsedUrl@ParsedUrl(url, Url(link, rank, origin)) =>
       log.debug(s"recursive fetching, rank $rank")
