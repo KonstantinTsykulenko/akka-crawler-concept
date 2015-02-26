@@ -1,13 +1,12 @@
 package com.tsykul.crawler.actor
 
-import akka.actor.{ActorLogging, Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.pipe
 import com.tsykul.crawler.messages.{FetchedUrl, Url}
 import spray.client.pipelining._
 import spray.http._
 
 import scala.concurrent.Future
-
-import akka.pattern.pipe
 
 class FetcherActor(val parser: ActorRef) extends Actor with ActorLogging {
 
@@ -16,10 +15,10 @@ class FetcherActor(val parser: ActorRef) extends Actor with ActorLogging {
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
   override def receive: Receive = {
-    case Url(url) => {
-      log.info(s"fetching: ${url}")
-      pipeline(Get(url)).pipeTo(parser).map(_ => FetchedUrl(url)).pipeTo(context.parent)
-    }
+    case url@Url(link, rank, origin) =>
+      log.info(s"fetching: $link, round: $rank")
+      val uri = Uri(link.replaceAll("\\s+", ""))
+      pipeline(Get(uri)).map(FetchedUrl(_, url)).pipeTo(parser)
     case msg: Any => unhandled(msg)
   }
 }

@@ -1,3 +1,3 @@
 package com.tsykul.crawler.messages
 
-case class ParsedUrl(url: String)
+case class ParsedUrl(url: String, origin: Url)

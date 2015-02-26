@@ -1,17 +1,15 @@
 package com.tsykul.crawler.actor
 
 import akka.actor.{Actor, ActorLogging}
-import com.tsykul.crawler.messages.ParsedUrl
+import com.tsykul.crawler.messages.{FetchedUrl, ParsedUrl}
 import com.tsykul.crawler.parser.HtmlParser
-import spray.http.HttpResponse
 
 class ParserActor extends Actor with ActorLogging with HtmlParser {
   override def receive: Receive = {
-    case resp: HttpResponse => {
+    case FetchedUrl(resp, origin) =>
       val links = parseHtml(resp)
-      log.info(s"links: ${links}")
-      links.foreach(context.parent ! ParsedUrl(_))
-    }
+      log.debug(s"links: $links")
+      links.foreach(context.parent ! ParsedUrl(_, origin))
     case msg: Any => unhandled(msg)
   }
 }

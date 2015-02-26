@@ -1,3 +1,5 @@
 package com.tsykul.crawler.messages
 
-case class FetchedUrl(url: String)
+import spray.http.HttpResponse
+
+case class FetchedUrl(response: HttpResponse, origin: Url)
