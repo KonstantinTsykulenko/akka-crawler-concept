@@ -20,12 +20,5 @@ class CrawlerService extends HttpServiceActor {
       }
     }
 
-  val myRoute =
-    path("crawl") {
-      get {
-        complete("OK")
-      }
-    }
-
   def receive = runRoute(crawlRoute)
 }
