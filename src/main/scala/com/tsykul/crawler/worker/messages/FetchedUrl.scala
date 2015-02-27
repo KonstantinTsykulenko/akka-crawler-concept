@@ -1,4 +1,4 @@
-package com.tsykul.crawler.messages
+package com.tsykul.crawler.worker.messages
 
 import spray.http.HttpResponse
 

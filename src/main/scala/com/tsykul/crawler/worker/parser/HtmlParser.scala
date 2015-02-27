@@ -1,4 +1,4 @@
-package com.tsykul.crawler.parser
+package com.tsykul.crawler.worker.parser
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element

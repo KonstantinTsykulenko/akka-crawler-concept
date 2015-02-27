@@ -1,8 +1,8 @@
-package com.tsykul.crawler.actor
+package com.tsykul.crawler.worker.actor
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.pipe
-import com.tsykul.crawler.messages.{FetchedUrl, Url}
+import com.tsykul.crawler.worker.messages.{FetchedUrl, Url}
 import spray.client.pipelining._
 import spray.http._
 

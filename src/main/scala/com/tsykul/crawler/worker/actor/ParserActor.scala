@@ -1,8 +1,8 @@
-package com.tsykul.crawler.actor
+package com.tsykul.crawler.worker.actor
 
 import akka.actor.{Actor, ActorLogging}
-import com.tsykul.crawler.messages.{FetchedUrl, ParsedUrl}
-import com.tsykul.crawler.parser.HtmlParser
+import com.tsykul.crawler.worker.parser.HtmlParser
+import com.tsykul.crawler.worker.messages.{FetchedUrl, ParsedUrl}
 
 class ParserActor extends Actor with ActorLogging with HtmlParser {
   override def receive: Receive = {

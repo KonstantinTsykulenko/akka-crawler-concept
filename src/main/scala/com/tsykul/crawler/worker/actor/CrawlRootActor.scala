@@ -1,7 +1,7 @@
-package com.tsykul.crawler.actor
+package com.tsykul.crawler.worker.actor
 
-import akka.actor.{ActorLogging, Props, Actor}
-import com.tsykul.crawler.messages.{CrawlConfig, ParsedUrl, Url}
+import akka.actor.{Actor, ActorLogging, Props}
+import com.tsykul.crawler.worker.messages.{CrawlConfig, ParsedUrl, Url}
 
 class CrawlRootActor extends Actor with ActorLogging {
   override def receive: Receive = {
@@ -10,7 +10,7 @@ class CrawlRootActor extends Actor with ActorLogging {
         context.actorOf(Props(classOf[UrlHandlerActor], filters)) ! Url(seed, depth)
       }
     case parsedUrl@ParsedUrl(url, _) =>
-      //log.info(s"parsed a url $url")
+      log.debug(s"parsed a url $url")
     case msg: Any => unhandled(msg)
   }
 }

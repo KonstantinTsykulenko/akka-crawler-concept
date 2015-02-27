@@ -1,7 +1,7 @@
-package com.tsykul.crawler.actor
+package com.tsykul.crawler.worker.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.tsykul.crawler.messages.{ParsedUrl, Url}
+import com.tsykul.crawler.worker.messages.{ParsedUrl, Url}
 
 class UrlHandlerActor(val filters: List[String]) extends Actor with ActorLogging {
 
@@ -12,10 +12,10 @@ class UrlHandlerActor(val filters: List[String]) extends Actor with ActorLogging
     case url: Url =>
       fetcher ! url
     case parsedUrl@ParsedUrl(url, Url(link, rank, origin)) =>
-      log.debug(s"recursive fetching, rank $rank")
       context.parent ! parsedUrl
-      if (needsAnotherRound(rank) && isAllowed(url))
+      if (needsAnotherRound(rank) && isAllowed(url)) {
         context.actorOf(Props(classOf[UrlHandlerActor], filters)) ! Url(url, rank - 1, Option(link))
+      }
     case msg: Any => unhandled(msg)
   }
 
