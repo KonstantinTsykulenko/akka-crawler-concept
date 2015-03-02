@@ -1,13 +1,20 @@
 package com.tsykul.crawler.worker.actor
 
-import akka.actor.{Actor, ActorLogging, Props}
-import com.tsykul.crawler.worker.messages.{CrawlConfig, ParsedUrl, Url}
+import java.util.UUID
 
-class CrawlRootActor extends Actor with ActorLogging {
+import akka.actor.{Actor, ActorLogging, Props}
+import com.tsykul.crawler.worker.messages.{CrawlRuntimeInfo, CrawlConfig, ParsedUrl, Url}
+
+class CrawlRootActor(val crawlUid: String) extends Actor with ActorLogging {
+
+  val fetcher = context.actorSelection("/user/fetchers")
+
   override def receive: Receive = {
     case crawlConfig@CrawlConfig(seeds, filters, depth) =>
       for (seed <- seeds) {
-        context.actorOf(Props(classOf[UrlHandlerActor], filters)) ! Url(seed, depth)
+        val urlHandlerActor = context.actorOf(Props(classOf[UrlHandlerActor], filters))
+        urlHandlerActor !
+          Url(seed, depth, runtimeInfo = CrawlRuntimeInfo(urlHandlerActor, self, crawlUid))
       }
     case parsedUrl@ParsedUrl(url, _) =>
       log.debug(s"parsed a url $url")
