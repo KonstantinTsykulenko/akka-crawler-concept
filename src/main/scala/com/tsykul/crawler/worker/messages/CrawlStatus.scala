@@ -1,3 +1,5 @@
 package com.tsykul.crawler.worker.messages
 
-case class CrawlStatus(uid: String)
+import akka.actor.ActorRef
+
+case class CrawlStatus(uid: String, requester: ActorRef)

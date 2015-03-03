@@ -16,7 +16,7 @@ class FetcherActor(val parser: ActorRef) extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case url@Url(link, rank, _, _) =>
-      log.info(s"fetching: $link, round: $rank")
+      log.info(s"Fetching: $link, round: $rank")
       val uri = Uri(link.replaceAll("\\s+", ""))
       pipeline(Get(uri)).map(FetchedUrl(_, url)).pipeTo(parser)
     case msg: Any => unhandled(msg)

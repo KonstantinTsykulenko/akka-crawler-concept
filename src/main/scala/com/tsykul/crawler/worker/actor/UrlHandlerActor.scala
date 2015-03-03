@@ -11,7 +11,6 @@ class UrlHandlerActor(val filters: List[String]) extends Actor with ActorLogging
     case url: Url =>
       fetcher ! url
     case parsedUrl@ParsedUrl(url, Url(link, rank, _, CrawlRuntimeInfo(root, stats, uid))) =>
-      stats ! parsedUrl
       if (needsAnotherRound(rank) && isAllowed(url)) {
         val urlHandlerActor = context.actorOf(Props(classOf[UrlHandlerActor], filters))
         urlHandlerActor ! Url(url, rank - 1, Option(link), CrawlRuntimeInfo(self, stats, uid))

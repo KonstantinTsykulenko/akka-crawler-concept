@@ -1,0 +1,30 @@
+package com.tsykul.crawler.worker.actor
+
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.pattern.ask
+import akka.util.Timeout
+import com.tsykul.crawler.worker.messages.{CrawlDefinition, CrawlStatus}
+
+class CrawlWorker extends Actor with ActorLogging {
+
+  import context.dispatcher
+
+  override def receive: Receive = {
+    case config@CrawlDefinition(_, _, _, crawlUid) =>
+      val crawlRoot = context.actorOf(Props(classOf[CrawlRootActor]), s"crawlRoot-$crawlUid")
+      crawlRoot ! config
+    case status@CrawlStatus(crawlUid, requester) =>
+      log.info(s"Got a status request for crawlUid: $crawlUid")
+      implicit val timeout = Timeout(5, TimeUnit.SECONDS)
+      val result = context.actorSelection(s"/user/crawlWorker/crawlRoot-$crawlUid").
+        resolveOne().flatMap(root => {
+        log.info(s"Crawl root resolved: $root")
+        root ? status
+      }).map(status => {
+        log.info(s"Sending status to $requester")
+        requester ! status
+      })
+  }
+}
