@@ -7,7 +7,8 @@ import com.tsykul.crawler.worker.parser.HtmlParser
 class ParserActor extends Actor with ActorLogging with HtmlParser {
 
   override def receive: Receive = {
-    case FetchedUrl(resp, origin@Url(url, _, _, CrawlRuntimeInfo(root, _, _))) =>
+    case fetchedUrl@FetchedUrl(resp, origin@Url(url, _, _, CrawlRuntimeInfo(root, stats, _))) =>
+      stats ! fetchedUrl
       log.info(s"Parsing http response from $url")
       val links = parseHtml(resp)
       log.debug(s"links: $links")
