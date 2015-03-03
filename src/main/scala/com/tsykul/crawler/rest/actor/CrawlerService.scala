@@ -29,11 +29,7 @@ class CrawlerService extends HttpServiceActor {
     path("crawl" / Rest) { crawlUid =>
       get {
         implicit val timeout = Timeout(5, TimeUnit.SECONDS)
-        val result = context.actorSelection(s"/user/crawler-service/crawlRoot-$crawlUid").resolveOne().flatMap(root => {
-          root ! "hello"
-          root ! CrawlStatus(crawlUid)
-          root ? CrawlStatus(crawlUid)
-        })
+        val result = context.actorSelection(s"/user/crawler-service/crawlRoot-$crawlUid").resolveOne().flatMap(_ ? CrawlStatus(crawlUid))
         onSuccess(result) {
           case resp: CrawlStatusResponse => complete(resp)
         }
