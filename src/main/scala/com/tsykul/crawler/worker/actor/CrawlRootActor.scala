@@ -1,7 +1,9 @@
 package com.tsykul.crawler.worker.actor
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.tsykul.crawler.rest.api.CrawlStatusResponse
+import com.tsykul.crawler.rest.api.CrawlStatus
+import com.tsykul.crawler.worker.domain.UrlStatus._
+import com.tsykul.crawler.worker.domain.{CrawlRuntimeInfo, UrlInfo}
 import com.tsykul.crawler.worker.messages._
 
 class CrawlRootActor extends Actor with ActorLogging {
@@ -15,18 +17,18 @@ class CrawlRootActor extends Actor with ActorLogging {
       for (seed <- seeds) {
         val urlHandlerActor = context.actorOf(Props(classOf[UrlHandlerActor], filters))
         urlHandlerActor !
-          Url(seed, depth, runtimeInfo = CrawlRuntimeInfo(urlHandlerActor, self, crawlUid))
+          Url(UrlInfo(seed, depth), Pending, CrawlRuntimeInfo(urlHandlerActor, self, crawlUid))
       }
     case msg: Any => unhandled(msg)
   }
 
   def handleStats(fetchedUrls: List[String]): Receive = {
-    case fetchedUrl@FetchedUrl(_, Url(url, _, _, _)) =>
+    case fetchedUrl@Url(UrlInfo(url, _, _), Fetched, _) =>
       log.debug(s"Got a fetched url $url")
       context.become(handleStats(url :: fetchedUrls))
-    case status: CrawlStatus =>
+    case status: GetCrawlStatus =>
       log.info("Replying to stats request")
-      sender ! CrawlStatusResponse(fetchedUrls)
+      sender ! CrawlStatus(fetchedUrls)
     case msg: Any => unhandled(msg)
   }
 }

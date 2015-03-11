@@ -1,4 +1,4 @@
-package com.tsykul.crawler.worker.messages
+package com.tsykul.crawler.worker.domain
 
 import akka.actor.ActorRef
 

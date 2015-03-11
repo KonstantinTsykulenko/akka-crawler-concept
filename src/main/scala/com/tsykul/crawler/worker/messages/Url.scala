@@ -1,3 +1,5 @@
 package com.tsykul.crawler.worker.messages
 
-case class Url(url: String, rank: Int, origin: Option[String] = None, runtimeInfo: CrawlRuntimeInfo)
+import com.tsykul.crawler.worker.domain.{UrlInfo, CrawlRuntimeInfo, UrlStatus}
+
+case class Url(urlInfo: UrlInfo, status: UrlStatus.Value, runtimeInfo: CrawlRuntimeInfo)

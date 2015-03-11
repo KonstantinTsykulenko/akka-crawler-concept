@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.tsykul.crawler.worker.messages.{CrawlDefinition, CrawlStatus}
+import com.tsykul.crawler.worker.messages.{CrawlDefinition, GetCrawlStatus}
 
 class CrawlWorker extends Actor with ActorLogging {
 
@@ -15,7 +15,7 @@ class CrawlWorker extends Actor with ActorLogging {
     case config@CrawlDefinition(_, _, _, crawlUid) =>
       val crawlRoot = context.actorOf(Props(classOf[CrawlRootActor]), s"crawlRoot-$crawlUid")
       crawlRoot ! config
-    case status@CrawlStatus(crawlUid, requester) =>
+    case status@GetCrawlStatus(crawlUid, requester) =>
       log.info(s"Got a status request for crawlUid: $crawlUid")
       implicit val timeout = Timeout(5, TimeUnit.SECONDS)
       val result = context.actorSelection(s"/user/crawlWorker/crawlRoot-$crawlUid").
