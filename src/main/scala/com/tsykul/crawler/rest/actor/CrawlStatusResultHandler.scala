@@ -2,7 +2,7 @@ package com.tsykul.crawler.rest.actor
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill}
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
-import com.tsykul.crawler.rest.api.CrawlStatus
+import com.tsykul.crawler.rest.api.CrawlStatusReport
 import com.tsykul.crawler.worker.messages.GetCrawlStatus
 
 class CrawlStatusResultHandler(val worker: ActorRef) extends Actor with ActorLogging{
@@ -12,7 +12,7 @@ class CrawlStatusResultHandler(val worker: ActorRef) extends Actor with ActorLog
     case ConsistentHashableEnvelope(GetCrawlStatus(uid, origin), key) =>
       origSender = sender()
       worker ! ConsistentHashableEnvelope(GetCrawlStatus(uid, self), key)
-    case response: CrawlStatus =>
+    case response: CrawlStatusReport =>
       origSender ! response
       self ! PoisonPill
   }

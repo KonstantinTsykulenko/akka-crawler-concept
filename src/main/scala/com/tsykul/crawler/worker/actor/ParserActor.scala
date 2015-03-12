@@ -3,7 +3,7 @@ package com.tsykul.crawler.worker.actor
 import akka.actor.{Actor, ActorLogging}
 import com.tsykul.crawler.worker.domain.UrlStatus.Fetched
 import com.tsykul.crawler.worker.domain.{UrlStatus, CrawlRuntimeInfo, UrlInfo}
-import com.tsykul.crawler.worker.messages.{Url, UrlContents}
+import com.tsykul.crawler.worker.messages.{ParsingEnded, Url, UrlContents}
 import com.tsykul.crawler.worker.parser.HtmlParser
 
 class ParserActor extends Actor with ActorLogging with HtmlParser {
@@ -15,6 +15,7 @@ class ParserActor extends Actor with ActorLogging with HtmlParser {
       val links = parseHtml(resp)
       log.debug(s"links: $links")
       links.foreach(link => root ! Url(UrlInfo(link, rank - 1, Option(origin)), UrlStatus.Parsed, runtimeInfo))
+      root ! ParsingEnded
     case msg: Any => unhandled(msg)
   }
 }

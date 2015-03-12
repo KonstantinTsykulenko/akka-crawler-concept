@@ -1,6 +1,6 @@
 package com.tsykul.crawler.worker.domain
 
 object UrlStatus extends Enumeration {
-  type CrawlNodeStatus = Value
+  type Status = Value
   val Pending, Approved, Fetched, Parsed, Rejected, Failed = Value
 }
