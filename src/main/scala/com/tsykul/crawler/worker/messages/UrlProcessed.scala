@@ -1,3 +1,3 @@
 package com.tsykul.crawler.worker.messages
 
-object UrlProcessed {}
+case class UrlProcessed(url: Url)

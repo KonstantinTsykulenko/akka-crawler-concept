@@ -15,7 +15,9 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-can" % sprayVersion,
   "io.spray" %% "spray-routing" % sprayVersion,
   "io.spray" %% "spray-json" % "1.3.1",
+  "org.scalaz" %% "scalaz-core" % "7.1.1",
   "io.spray" %% "spray-testkit" % sprayVersion % "test",
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
+  "org.scalatest" %% "scalatest" % "2.2.4",
   "org.specs2" %% "specs2-core" % "2.3.11" % "test"
 )

@@ -10,5 +10,5 @@ object BootBackend extends App {
 
   val crawlWorker = system.actorOf(Props[CrawlWorker], "crawlWorker")
   val parsers = system.actorOf(Props[ParserActor].withRouter(FromConfig), "parsers")
-  val fetchers = system.actorOf(Props(classOf[FetcherActor], parsers).withRouter(FromConfig), "fetchers")
+  val fetchers = system.actorOf(Props(classOf[FetcherActor]).withRouter(FromConfig), "fetchers")
 }

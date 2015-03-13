@@ -1,3 +1,3 @@
 package com.tsykul.crawler.worker.messages
 
-object ParsingEnded {}
+case class ParsingEnded(url: Url)

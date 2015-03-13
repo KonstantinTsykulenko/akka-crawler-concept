@@ -1,68 +1,66 @@
 package com.tsykul.crawler.worker.actor
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import com.tsykul.crawler.worker.domain.UrlInfo
-import com.tsykul.crawler.worker.domain.UrlStatus._
-import com.tsykul.crawler.worker.messages.{ParsingEnded, Url, UrlProcessed}
+import akka.actor._
+import com.tsykul.crawler.worker.domain._
+import com.tsykul.crawler.worker.messages.{UrlProcessed, ParsingEnded, Url, UrlContents}
 
-class UrlHandlerActor(val filters: List[String], val root: ActorRef) extends Actor with ActorLogging {
+class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url)
+  extends Actor with ActorLogging with FSM[UrlHandlerState, UrlHandlerData] {
 
+  //TODO use some form of injection
   val fetcher = context.actorSelection("/user/fetchers")
+  val parser = context.actorSelection("/user/parsers")
 
-  override def receive: Receive = {
-    case url@Url(urlInfo@UrlInfo(_, rank, _), Pending, runtimeInfo) =>
-      log.debug(s"Handling a url: $url")
-      if (needsAnotherRound(rank)) {
-        fetcher ! Url(urlInfo, Approved, runtimeInfo)
-        context.become(gather(0, 0))
-      } else {
-        root ! UrlProcessed
-        context.become(finished)
-      }
-    case msg: Any =>
-      unhandled(msg)
+  startWith(Fetching, UrlHandlerData(0, 0))
+
+  override def preStart(): Unit = {
+    fetcher ! url
   }
 
-  def gather(pendingUrls: Int, fetchedUrls: Int): Receive = {
-    case parsedUrl@Url(info@UrlInfo(url, _, _), Parsed, runtimeInfo) =>
-      if (isAllowed(url)) {
-        val urlHandlerActor = context.actorOf(Props(classOf[UrlHandlerActor], filters, self))
-        urlHandlerActor ! Url(info, Pending, runtimeInfo)
-        context.become(gather(pendingUrls + 1, fetchedUrls))
-      }
-    case UrlProcessed =>
-      log.info("Child url processing finished")
-      context.become(gather(pendingUrls, fetchedUrls + 1))
-    case ParsingEnded =>
-      log.info("Url parsing finished")
-      if (pendingUrls == fetchedUrls) {
-        log.info("Url processing finished")
-        root ! UrlProcessed
-        context.become(finished)
-      } else {
-        context.become(waitForChildren(pendingUrls, fetchedUrls))
-      }
-    case msg: Any =>
-      unhandled(msg)
+  whenUnhandled {
+    case Event(e, s) =>
+      log.warning(s"Unhandled, state $stateName, message $e")
+      stay
   }
 
-  def waitForChildren(pendingUrls: Int, fetchedUrls: Int): Receive = {
-    case UrlProcessed =>
-      log.info("Child url processing finished")
-      val newFetchedUrls = fetchedUrls + 1
-      if (pendingUrls == newFetchedUrls) {
-        log.info("Url processing finished")
-        root ! UrlProcessed
-        context.become(finished)
-      } else {
-        context.become(waitForChildren(pendingUrls, newFetchedUrls))
-      }
-    case msg: Any =>
-      unhandled(msg)
+  when(Fetching) {
+    case Event(urlContents: UrlContents, _) =>
+      //TODO check if this creates any significant overhead over passing from fetcher to parser directly
+      parser ! urlContents
+      goto(Parsing)
   }
 
-  def finished: Receive = {
-    case msg: Any => unhandled(msg)
+  when(Parsing) {
+    case Event(url@Url(link, rank, _), UrlHandlerData(parsed, fetched)) =>
+      if (needsAnotherRound(rank) && isAllowed(link)) {
+        context.actorOf(Props(classOf[UrlHandlerActor], filters, self, url))
+        stay using (UrlHandlerData(parsed + 1, fetched))
+      }
+      else {
+        stay
+      }
+    case Event(ended: ParsingEnded, UrlHandlerData(parsed, fetched)) =>
+      //exit if terminal url
+      log.info(s"Parsing ended, parsed $parsed, fetched $fetched")
+      if (url.rank == 1) {
+        log.info(s"Finishing processing of terminal url ${url.url}")
+        root ! UrlProcessed(url)
+        self ! PoisonPill
+      }
+      goto(Waiting)
+    case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
+      stay using (UrlHandlerData(parsed, fetched + 1))
+  }
+
+  when(Waiting) {
+    case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
+      val newFetched = fetched + 1
+      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched")
+      if (newFetched == parsed) {
+        root ! UrlProcessed(url)
+        self ! PoisonPill
+      }
+      stay using (UrlHandlerData(parsed, newFetched))
   }
 
   private def isAllowed(url: String) = {
