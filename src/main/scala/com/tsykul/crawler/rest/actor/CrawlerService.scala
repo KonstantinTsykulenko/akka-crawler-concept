@@ -10,7 +10,7 @@ import akka.routing.FromConfig
 import akka.util.Timeout
 import com.tsykul.crawler.rest.api.{CrawlConfig, CrawlStatusReport}
 import com.tsykul.crawler.rest.protocol.CrawlerProtocol._
-import com.tsykul.crawler.worker.actor.CrawlWorker
+import com.tsykul.crawler.worker.actor.CrawlWorkerActor
 import com.tsykul.crawler.worker.messages.{CrawlDefinition, GetCrawlStatus}
 import spray.routing._
 
@@ -18,7 +18,7 @@ class CrawlerService extends HttpServiceActor {
 
   import context.dispatcher
 
-  val workerRouter = context.actorOf(FromConfig.props(Props[CrawlWorker]),
+  val workerRouter = context.actorOf(FromConfig.props(Props(classOf[CrawlWorkerActor], null)),
     name = "crawlWorkers")
 
   val crawlRoute =

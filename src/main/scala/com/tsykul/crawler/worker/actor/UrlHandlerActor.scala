@@ -1,10 +1,11 @@
 package com.tsykul.crawler.worker.actor
 
 import akka.actor._
+import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import com.tsykul.crawler.worker.domain._
-import com.tsykul.crawler.worker.messages.{UrlProcessed, ParsingEnded, Url, UrlContents}
+import com.tsykul.crawler.worker.messages._
 
-class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url)
+class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url, dispatcher: ActorRef)
   extends Actor with ActorLogging with FSM[UrlHandlerState, UrlHandlerData] {
 
   //TODO use some form of injection
@@ -33,18 +34,19 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url)
   when(Parsing) {
     case Event(url@Url(link, rank, _), UrlHandlerData(parsed, fetched)) =>
       if (needsAnotherRound(rank) && isAllowed(link)) {
-        context.actorOf(Props(classOf[UrlHandlerActor], filters, self, url))
-        stay using (UrlHandlerData(parsed + 1, fetched))
-      }
-      else {
+        log.info(s"Rebalancing $url, dispatcher $dispatcher")
+        dispatcher ! ConsistentHashableEnvelope(SeedUrl(url, self, filters), link)
+        stay using UrlHandlerData(parsed + 1, fetched)
+      } else {
         stay
       }
     case Event(ended: ParsingEnded, UrlHandlerData(parsed, fetched)) =>
       //exit if terminal url
-      log.info(s"Parsing ended, parsed $parsed, fetched $fetched")
+      log.debug(s"Parsing ended, parsed $parsed, fetched $fetched")
       if (url.rank == 1) {
         log.info(s"Finishing processing of terminal url ${url.url}")
         root ! UrlProcessed(url)
+        log.info(s"Reporting end of processing to root $root")
         self ! PoisonPill
       }
       goto(Waiting)
@@ -55,7 +57,7 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url)
   when(Waiting) {
     case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
-      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched")
+      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender $sender")
       if (newFetched == parsed) {
         root ! UrlProcessed(url)
         self ! PoisonPill

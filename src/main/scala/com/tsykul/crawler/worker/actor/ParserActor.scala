@@ -8,7 +8,7 @@ class ParserActor extends Actor with ActorLogging with HtmlParser {
 
   override def receive: Receive = {
     case fetchedUrl@UrlContents(origin@Url(url, rank, _), resp) =>
-      log.info(s"Parsing http response from $url")
+      log.debug(s"Parsing http response from $url")
       val links = parseHtml(resp)
       log.debug(s"links: $links")
       links.foreach(link => sender ! Url(link, rank - 1, Option(origin)))
