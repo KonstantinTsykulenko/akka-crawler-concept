@@ -15,7 +15,7 @@ class FetcherActor extends Actor with ActorLogging {
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
   override def receive: Receive = {
-    case url@Url(link, rank, _) =>
+    case url@Url(link, rank, _, _) =>
       log.debug(s"Fetching: $link, round: $rank")
       //TODO move all normalization logic to parser
       val uri = Uri(link.replaceAll("\\s+", ""))

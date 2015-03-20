@@ -8,7 +8,7 @@ import akka.pattern.ask
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
 import akka.routing.FromConfig
 import akka.util.Timeout
-import com.tsykul.crawler.rest.api.{CrawlConfig, CrawlStatusReport}
+import com.tsykul.crawler.rest.api.{CrawlConfig, CrawlStatusResponse}
 import com.tsykul.crawler.rest.protocol.CrawlerProtocol._
 import com.tsykul.crawler.worker.actor.CrawlWorkerActor
 import com.tsykul.crawler.worker.messages.{CrawlDefinition, GetCrawlStatus}
@@ -38,7 +38,7 @@ class CrawlerService extends HttpServiceActor {
           //TODO Try to get ask working directly without an intermediate actor
           val result = handler ? ConsistentHashableEnvelope(GetCrawlStatus(crawlUid, self), crawlUid)
           onSuccess(result) {
-            case resp: CrawlStatusReport => complete(resp)
+            case resp: CrawlStatusResponse => complete(resp)
           }
         }
       }

@@ -21,7 +21,7 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url, d
   whenUnhandled {
     case Event(e, s) =>
       log.warning(s"Unhandled, state $stateName, message $e")
-      stay
+      stay()
   }
 
   when(Fetching) {
@@ -32,13 +32,13 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url, d
   }
 
   when(Parsing) {
-    case Event(url@Url(link, rank, _), UrlHandlerData(parsed, fetched)) =>
+    case Event(url@Url(link, rank, _, _), UrlHandlerData(parsed, fetched)) =>
       if (needsAnotherRound(rank) && isAllowed(link)) {
         log.info(s"Rebalancing $url, dispatcher $dispatcher")
         dispatcher ! ConsistentHashableEnvelope(SeedUrl(url, self, filters), link)
         stay using UrlHandlerData(parsed + 1, fetched)
       } else {
-        stay
+        stay()
       }
     case Event(ended: ParsingEnded, UrlHandlerData(parsed, fetched)) =>
       //exit if terminal url
@@ -51,18 +51,28 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url, d
       }
       goto(Waiting)
     case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
-      stay using (UrlHandlerData(parsed, fetched + 1))
+      val newFetched = fetched + 1
+      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender ${sender()}")
+      stay using UrlHandlerData(parsed, newFetched)
+    case Event(rejected: RejectedUrl, UrlHandlerData(parsed, fetched)) =>
+      val newFetched = fetched + 1
+      log.info(s"Child url rejected, parsed $parsed, fetched $newFetched, sender ${sender()}")
+      stay using UrlHandlerData(parsed, newFetched)
   }
 
   when(Waiting) {
     case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
-      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender $sender")
+      log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender ${sender()}")
       if (newFetched == parsed) {
         root ! UrlProcessed(url)
         self ! PoisonPill
       }
-      stay using (UrlHandlerData(parsed, newFetched))
+      stay using UrlHandlerData(parsed, newFetched)
+    case Event(rejected: RejectedUrl, UrlHandlerData(parsed, fetched)) =>
+      val newFetched = fetched + 1
+      log.info(s"Child url rejected, parsed $parsed, fetched $newFetched, sender ${sender()}")
+      stay using UrlHandlerData(parsed, newFetched)
   }
 
   private def isAllowed(url: String) = {
