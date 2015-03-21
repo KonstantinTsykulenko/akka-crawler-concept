@@ -12,14 +12,14 @@ class CrawlRootActor(val dispatcher: ActorRef) extends Actor with ActorLogging {
     case crawlConfig@CrawlDefinition(seeds, filters, depth, crawlUid) =>
       log.debug(s"Initialized crawl root, uid: $crawlUid")
       for (seed <- seeds) {
-        val seedUrl = SeedUrl(Url(seed, depth, metadata = CrawlMetadata(crawlUid)), self, filters)
+        val seedUrl = SeedUrl(Url(seed, depth, metadata = CrawlMetadata(crawlUid, self)), self, filters)
         dispatcher ! ConsistentHashableEnvelope(seedUrl, seed)
       }
-      context.become(aggregate(seeds.length, 0))
+      context.become(aggregate(seeds.length, 0, Nil, Nil))
     case msg: Any => unhandled(msg)
   }
 
-  def aggregate(totalSeeds: Int, totalProcessed: Int): Receive = {
+  def aggregate(totalSeeds: Int, totalProcessed: Int, fetched: List[String], rejected: List[String]): Receive = {
     case status: GetCrawlStatus =>
       //TODO change to proper enum
       log.debug("Replying to stats request")
@@ -28,9 +28,13 @@ class CrawlRootActor(val dispatcher: ActorRef) extends Actor with ActorLogging {
       } else {
         "RUNNING"
       }
-      sender ! CrawlStatusResponse(Nil, status)
-    case url: UrlProcessed =>
-      context.become(aggregate(totalSeeds, totalProcessed + 1))
+      sender ! CrawlStatusResponse(fetched, rejected, status)
+    case url: ProcessedUrl =>
+      context.become(aggregate(totalSeeds, totalProcessed + 1, fetched, rejected))
+    case RejectedUrl(Url(link, _, _, _)) =>
+      context.become(aggregate(totalSeeds, totalProcessed, fetched, link :: rejected))
+    case FetchedUrl(Url(link, _, _, _)) =>
+      context.become(aggregate(totalSeeds, totalProcessed, link :: fetched, rejected))
     case msg: Any =>
       unhandled(msg)
   }

@@ -18,7 +18,7 @@ class UrlDispatcherActor(val dispatcher: ActorRef) extends Actor with ActorLoggi
   }
 
   def dispatch(inProcessing: Map[String,Set[Url]]): Receive = {
-    case SeedUrl(url@Url(_, _, _, CrawlMetadata(crawlUid)), root, filters) =>
+    case SeedUrl(url@Url(_, _, _, CrawlMetadata(crawlUid, _)), root, filters) =>
       log.debug(s"Dispatching $url")
       if (!inProcessing(crawlUid).contains(url)) {
         context.actorOf(Props(classOf[UrlHandlerActor], filters, root, url, dispatcher))

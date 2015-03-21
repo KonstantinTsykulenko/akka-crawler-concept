@@ -1,3 +1,3 @@
 package com.tsykul.crawler.worker.messages
 
-case class UrlProcessed(url: Url)
+case class FetchedUrl(url: Url)

@@ -45,32 +45,36 @@ class UrlHandlerActor(val filters: List[String], val root: ActorRef, url: Url, d
       log.debug(s"Parsing ended, parsed $parsed, fetched $fetched")
       if (url.rank == 1) {
         log.info(s"Finishing processing of terminal url ${url.url}")
-        root ! UrlProcessed(url)
+        root ! ProcessedUrl(url)
         log.info(s"Reporting end of processing to root $root")
         self ! PoisonPill
       }
       goto(Waiting)
-    case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
+    case Event(processed@ProcessedUrl(fetchedUrl@Url(_, _, _, CrawlMetadata(_, statsCollector))), UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
+      statsCollector ! FetchedUrl(fetchedUrl)
       log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender ${sender()}")
       stay using UrlHandlerData(parsed, newFetched)
-    case Event(rejected: RejectedUrl, UrlHandlerData(parsed, fetched)) =>
+    case Event(rejected@RejectedUrl(Url(_, _, _, CrawlMetadata(_, statsCollector))), UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
+      statsCollector ! rejected
       log.info(s"Child url rejected, parsed $parsed, fetched $newFetched, sender ${sender()}")
       stay using UrlHandlerData(parsed, newFetched)
   }
 
   when(Waiting) {
-    case Event(processed: UrlProcessed, UrlHandlerData(parsed, fetched)) =>
+    case Event(processed@ProcessedUrl(fetchedUrl@Url(_, _, _, CrawlMetadata(_, statsCollector))), UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
+      statsCollector ! FetchedUrl(fetchedUrl)
       log.info(s"Child url processing ended, parsed $parsed, fetched $newFetched, sender ${sender()}")
       if (newFetched == parsed) {
-        root ! UrlProcessed(url)
+        root ! ProcessedUrl(url)
         self ! PoisonPill
       }
       stay using UrlHandlerData(parsed, newFetched)
-    case Event(rejected: RejectedUrl, UrlHandlerData(parsed, fetched)) =>
+    case Event(rejected@RejectedUrl(Url(_, _, _, CrawlMetadata(_, statsCollector))), UrlHandlerData(parsed, fetched)) =>
       val newFetched = fetched + 1
+      statsCollector ! rejected
       log.info(s"Child url rejected, parsed $parsed, fetched $newFetched, sender ${sender()}")
       stay using UrlHandlerData(parsed, newFetched)
   }

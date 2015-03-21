@@ -6,5 +6,5 @@ import spray.json.DefaultJsonProtocol
 
 object CrawlerProtocol extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val crawlConfigFormat = jsonFormat3(CrawlConfig)
-  implicit val crawlStatusResponseFormat = jsonFormat2(CrawlStatusResponse)
+  implicit val crawlStatusResponseFormat = jsonFormat3(CrawlStatusResponse)
 }

@@ -1,3 +1,5 @@
 package com.tsykul.crawler.worker.messages
 
-case class CrawlMetadata(uid: String)
+import akka.actor.ActorRef
+
+case class CrawlMetadata(uid: String, statsCollector: ActorRef)
