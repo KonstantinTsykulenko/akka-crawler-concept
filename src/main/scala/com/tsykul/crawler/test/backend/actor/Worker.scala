@@ -45,7 +45,7 @@ class Worker
             stay using WorkerMetadata(initialWork, workerMapping - actor, workMapping + (w.uid -> Failed))
           }).get
         } else {
-          log.info("Leaf terminated gracefully afrer work completion")
+          log.debug("Leaf terminated gracefully after work completion")
           stay()
         }
       }
@@ -53,7 +53,7 @@ class Worker
         stay()
       }
     case Event(WorkComplete(work), WorkerMetadata(initialWork, workerMapping, workMapping)) =>
-      log.info("Leaf worker: work complete {}", work)
+      log.debug("Leaf worker: work complete {}", work)
       val newWorkMapping = workMapping + (work.uid -> Completed)
       log.debug("Work status: {}", newWorkMapping)
       if (newWorkMapping.values.forall(_ == Completed)) {
