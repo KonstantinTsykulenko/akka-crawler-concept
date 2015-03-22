@@ -3,7 +3,7 @@ package com.tsykul.crawler.test.frontend
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
-import akka.routing.{RoundRobinPool, RoundRobinGroup}
+import akka.routing.RoundRobinPool
 import akka.util.Timeout
 import com.tsykul.crawler.test.frontend.actor.{WorkTracker, WorkerService}
 import com.typesafe.config.ConfigFactory
