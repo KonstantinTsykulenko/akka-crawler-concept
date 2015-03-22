@@ -5,9 +5,7 @@ import akka.cluster.routing.{ClusterRouterGroupSettings, ClusterRouterGroup}
 import akka.routing.ConsistentHashingGroup
 import com.tsykul.crawler.core.backend.loadbalance.WorkerMapper
 
-trait ConsistentHashingWorkDispatcher {
-  def workers: List[String]
-  def factory: ActorRefFactory
+trait ConsistentHashingWorkDispatcher extends WorkDispatcher {
   val dispatcher = factory.actorOf(
     ClusterRouterGroup(
       ConsistentHashingGroup(Nil).withHashMapper(WorkerMapper()),
