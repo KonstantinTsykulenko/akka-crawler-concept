@@ -72,7 +72,7 @@ abstract class Worker[RESULT, STATE <: WorkResultState[RESULT], WORK]
     case Event(NoMoreWork, _) =>
       goto(Waiting)
     case Event(work: Work[WORK], WorkerMetadata(initialWork, workerMapping, workMapping, state)) =>
-      log.debug("Work received {}", work)
+      log.info("Work received {}", work)
       dispatcher ! work
       stay using WorkerMetadata(initialWork, workerMapping, workMapping + (work.uid -> Pending), state)
   }

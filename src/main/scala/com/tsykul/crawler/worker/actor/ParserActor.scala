@@ -1,8 +1,8 @@
 package com.tsykul.crawler.worker.actor
 
 import akka.actor.{Actor, ActorLogging}
+import com.tsykul.crawler.v2.backend.parser.HtmlParser
 import com.tsykul.crawler.worker.messages.{ParsingEnded, Url, UrlContents}
-import com.tsykul.crawler.worker.parser.HtmlParser
 
 class ParserActor extends Actor with ActorLogging with HtmlParser {
 

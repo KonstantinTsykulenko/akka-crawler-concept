@@ -8,7 +8,7 @@ import spray.http._
 
 import scala.concurrent.Future
 
-class FetcherActor extends Actor with ActorLogging {
+class FetcherActor(val parser: ActorRef) extends Actor with ActorLogging {
 
   import context.dispatcher
 

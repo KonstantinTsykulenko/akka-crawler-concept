@@ -1,4 +1,4 @@
-package com.tsykul.crawler.worker.parser
+package com.tsykul.crawler.v2.backend.parser
 
 import org.jsoup.Jsoup
 import spray.http.HttpResponse
