@@ -9,6 +9,7 @@ class SortWorker(parent: ActorRef, dispatcher: ActorRef)(aggregator: SortResultA
   extends Worker[SortWorkResult, SortWorkResultState, SortWork](parent, dispatcher)(aggregator) {
 
   def handleWork(list: List[Int], work: Work[SortWork], state: SortWorkResultState) = {
+//    Thread.sleep(5000)
     list match {
       case Nil =>
         val result = state.transferableResult

@@ -16,6 +16,7 @@ class SortWorkTracker extends Actor with ActorLogging with ConsistentHashingWork
 
   def track(statuses: Map[String, SortWorkResult]): Receive = {
     case work: Work[Any] =>
+      log.info("Inbound work {}", work)
       dispatcher ! work
       context.become(track(statuses + (work.uid -> SortWorkResult(None, Pending))))
     case WorkComplete(uid, LeftSortWorkResult(result)) =>
