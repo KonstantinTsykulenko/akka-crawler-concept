@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, Actor, ActorLogging}
 import akka.pattern.pipe
 import com.tsykul.crawler.v2.backend.actor.state.SingleUrl
 import com.tsykul.crawler.v2.backend.messages.CrawlUrlContents
-import com.tsykul.crawler.worker.messages.{Url, UrlContents}
 import spray.client.pipelining._
 import spray.http._
 
@@ -17,7 +16,7 @@ class Fetcher(val parser: ActorRef) extends Actor with ActorLogging {
   val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 
   override def receive: Receive = {
-    case url@SingleUrl(link, origin, _, depth) =>
+    case url@SingleUrl(link, origin, _, depth, _) =>
       log.info(s"Fetching: $link, depth: $depth")
       //TODO move all normalization logic to parser
       val uri = Uri(link.replaceAll("\\s+", ""))

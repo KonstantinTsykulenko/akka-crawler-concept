@@ -54,9 +54,9 @@ abstract class Worker[RESULT, STATE <: WorkResultState[RESULT], WORK]
         stay()
       }
     case Event(WorkComplete(uid, result: RESULT), WorkerMetadata(initialWork, workerMapping, workMapping, state: STATE)) =>
-      log.debug("Leaf worker: work {} complete, result {}", uid, result)
+      log.info("Leaf worker: work {} complete, result {}", uid, result)
       val newWorkMapping = workMapping + (uid -> Completed)
-      log.debug("Work status: {}", newWorkMapping)
+      log.info("Work status: {}", newWorkMapping)
       if (newWorkMapping.values.forall(_ == Completed) && stateName == Waiting) {
         val finalResult = aggregator.aggregate(result, Option(state)).transferableResult
         log.info("Work {} complete, transferring result: {}", initialWork.uid, finalResult)
@@ -72,7 +72,7 @@ abstract class Worker[RESULT, STATE <: WorkResultState[RESULT], WORK]
     case Event(NoMoreWork, _) =>
       goto(Waiting)
     case Event(work: Work[WORK], WorkerMetadata(initialWork, workerMapping, workMapping, state)) =>
-      log.info("Work received {}", work)
+      log.debug("Work received {}", work)
       dispatcher ! work
       stay using WorkerMetadata(initialWork, workerMapping, workMapping + (work.uid -> Pending), state)
   }

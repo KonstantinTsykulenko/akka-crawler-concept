@@ -2,6 +2,7 @@ package com.tsykul.crawler.v2.backend.actor.state
 
 import com.tsykul.crawler.core.backend.actor.state.WorkResultAggregator
 
+//TODO try to use scalaz monoids + fold and streams?
 class CrawlWorkResultAggregator extends WorkResultAggregator[CrawlWorkResult, CrawlWorkResult] {
   override def aggregate(workResult: CrawlWorkResult, workResultAggregated: Option[CrawlWorkResult]): CrawlWorkResult = {
     val current = workResultAggregated.getOrElse(zero)

@@ -1,5 +1,6 @@
 package com.tsykul.crawler.v2.frontend.actor
 
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorRef
@@ -21,7 +22,8 @@ class CrawlService(val tracker: ActorRef) extends HttpServiceActor {
     path("crawl") {
       post {
         entity(as[CrawlWork]) { case CrawlWork(seeds, filters, depth) =>
-          val work = BackendWork(UrlBatch(seeds, None, filters, depth))
+          val uid = UUID.randomUUID().toString
+          val work = BackendWork(UrlBatch(seeds, None, filters, depth, uid), uid)
           tracker ! work
           complete(work.uid)
         }

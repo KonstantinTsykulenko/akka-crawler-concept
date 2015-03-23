@@ -9,19 +9,20 @@ import com.tsykul.crawler.v2.backend.actor.state.{CrawlWorkResult, SingleUrl, Cr
 class CrawlWorkerMaster(dispatcher: ActorRef, aggregator: CrawlWorkResultAggregator, fetcher: ActorRef)
   extends WorkerMaster[CrawlWork, CrawlerWorker](dispatcher, classOf[CrawlerWorker], aggregator){
   override def receive: Receive = {
-    case w@Work(SingleUrl(url, _, _, _), uid) =>
+    case w@Work(SingleUrl(url, _, _, _, uid), _) =>
       createWorker forward w
       context become(filtering(Map(uid -> Set(url)).withDefaultValue(Set.empty)))
     case w: Work[Any] => createWorker forward w
   }
 
   def filtering(visited: Map[String, Set[String]]): Receive = {
-    case w@Work(SingleUrl(url, _, _, _), uid) =>
-      if (visited(uid).contains(url))
+    case w@Work(SingleUrl(url, _, _, _, uid), workUid) =>
+      log.info("Filtering status {}", visited)
+      if (!visited(uid).contains(url))
         createWorker forward w
       else {
         log.info("Filtering out already visited url {}", url)
-        sender ! WorkComplete(uid, CrawlWorkResult(Nil))
+        sender ! WorkComplete(workUid, CrawlWorkResult(Nil))
       }
       context become(filtering(visited + (uid -> (visited(uid) + url))))
     case w: Work[Any] =>
